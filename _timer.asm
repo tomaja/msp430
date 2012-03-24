@@ -29,15 +29,15 @@ restoreGPR	.macro
 			.endm
 ; *************************************************************************
 				.data
-TimerCounter	.word 0
+pTimerCounter	.short 0
 ; *************************************************************************
 			.text
 			.global kermod
 			.global systimer
 			.global Reschedule
-			.global TimerCounter
+			.global pTimerCounter
 
-systimer:	inc.w	&TimerCounter	; Increment system clock
+systimer:	inc.w	&pTimerCounter	; Increment system clock
 			cmp.w	#0, &kermod		; Check interrupted process mode (kernel or user)
 			jne		exit			; Exit if kernel mode is active
 			saveGPR
