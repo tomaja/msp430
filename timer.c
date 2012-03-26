@@ -10,7 +10,7 @@
 #include  "msp430g2553.h"
 
 
-/*
+/**
  *
  */
 void InitSystemTimer()
@@ -21,7 +21,7 @@ void InitSystemTimer()
 	__bis_SR_register(GIE);					// Enable global interrupts
 }
 
-/*
+/**
  *
  */
 void StopSystemTimer()

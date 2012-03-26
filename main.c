@@ -9,7 +9,11 @@ void SecondProcess(void)
 {
 	Prolog();
 
-	P1OUT |= BIT6;
+	int i = 0;;
+	for(; i < 1000;++i)
+	{
+		P1OUT ^= BIT6;
+	}
 
 	Epilog();
 }
@@ -18,8 +22,14 @@ void FirstProcess(void)
 {
 	Prolog();
 
-	P1OUT = BIT0;
 	CreateProcess(SecondProcess);
+
+	int i = 0;
+	for(;i < 10000; ++i)
+	{
+		P1OUT = BIT0;
+	}
+
 
 	Epilog();
 }
@@ -33,13 +43,13 @@ void main(void)
 	P1DIR |= BIT0 + BIT6;
 
 
-
-//	CreateProcess(FirstProcess);
+	CreateProcess(FirstProcess);
 
 	InitSystemTimer();
+
+	P1OUT = BIT0 + BIT6;
+
 	__bis_SR_register(LPM0);
-
-
 }
 
 

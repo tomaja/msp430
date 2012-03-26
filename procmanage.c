@@ -41,8 +41,7 @@ struct SProcess				Process[MAXPROCESSCOUNT];
 static int ProcCount 		= 0;
 static int ProcCurrent 		= 0;
 static char NeedReschedule	= 0;
-extern int pTimerCounter;
-int nTimerCounter = 5;
+extern int TimerCounter;
 
 /*
  *
@@ -116,7 +115,6 @@ int KernelDestroyProcess()
  */
 int* Reschedule(int *ptrStack)
 {
-	//nTimerCounter = *((short*)TimerCounter);
 	if(ProcCount == 1 && ProcCurrent == 0)
 		return Process[ProcCurrent].ptrStack;
 
@@ -126,22 +124,14 @@ int* Reschedule(int *ptrStack)
 //		Check all current process blocking data and set process state ready if it is possible
 //	}
 	//if((nTimerCounter % 5) == 0)	// !!!!!! ONLY FOR TESTING
-	if((pTimerCounter % 5) == 0)
+	if((TimerCounter % 5) == 0)
 	{
 		P1OUT ^= BIT0 + ~BIT6;	// !!!!!! ONLY FOR TESTING
 		return ptrStack;
 	}
 
-	if(nTimerCounter % 5 == 0)
+	if(TimerCounter % 5 == 0 || NeedReschedule == 1)
 	{
-		P1OUT ^= BIT0 + ~BIT6;	// !!!!!! ONLY FOR TESTING
-		return ptrStack;
-	}
-
-
-	if(nTimerCounter % 5 == 0 || NeedReschedule == 1)
-	{
-		P1OUT ^= BIT0 + ~BIT6;
 		Process[ProcCurrent].ptrStack = ptrStack;
 		++ProcCurrent;
 		ProcCurrent %= 3;
