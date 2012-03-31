@@ -21,6 +21,8 @@ int Action(enum SSysCallType Type, void *ptrData)
 		break;
 	case destroyproc:
 		KernelDestroyProcess();
+	case suspendproc:
+		KernelSuspendProcess((unsigned int)ptrData);
 	default:
 		return -1;
 	}

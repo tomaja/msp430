@@ -14,6 +14,7 @@ void Prolog();
 void Epilog();
 int CreateProcess(ptrFunction ptrFunc);
 int DestroyProcess();
+int SuspendProcess(unsigned int SleepTime);
 
 
 

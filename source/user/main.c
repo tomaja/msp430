@@ -9,10 +9,11 @@ void SecondProcess(void)
 {
 	Prolog();
 
-	int i = 0;;
+	int i = 0;
 	for(; i < 1000;++i)
 	{
 		P1OUT ^= BIT6;
+		SuspendProcess(1000);
 	}
 
 	Epilog();
@@ -28,6 +29,7 @@ void FirstProcess(void)
 	for(;i < 10000; ++i)
 	{
 		P1OUT = BIT0;
+		SuspendProcess(1000);
 	}
 
 

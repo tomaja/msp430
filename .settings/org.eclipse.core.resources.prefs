@@ -1,7 +1,12 @@
-#Tue Feb 14 11:43:58 MSK 2012
 eclipse.preferences.version=1
 encoding//Debug/makefile=UTF-8
 encoding//Debug/objects.mk=UTF-8
+encoding//Debug/source/kernel/subdir_rules.mk=UTF-8
+encoding//Debug/source/kernel/subdir_vars.mk=UTF-8
+encoding//Debug/source/stdlib/subdir_rules.mk=UTF-8
+encoding//Debug/source/stdlib/subdir_vars.mk=UTF-8
+encoding//Debug/source/user/subdir_rules.mk=UTF-8
+encoding//Debug/source/user/subdir_vars.mk=UTF-8
 encoding//Debug/sources.mk=UTF-8
 encoding//Debug/subdir_rules.mk=UTF-8
 encoding//Debug/subdir_vars.mk=UTF-8

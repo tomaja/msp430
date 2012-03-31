@@ -32,3 +32,9 @@ int CreateProcess(ptrFunction ptrFunc)
 	syscall(createproc, ptrFunc);
 	return 0;
 }
+
+int SuspendProcess(unsigned int SleepTime)
+{
+	syscall(suspendproc, &SleepTime);
+	return 0;
+}

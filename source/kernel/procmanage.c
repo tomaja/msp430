@@ -109,6 +109,16 @@ int KernelDestroyProcess()
  	return 0;
 }
 
+/*
+ *
+ */
+int KernelSuspendProcess(unsigned int *pSleepTime)
+{
+
+	return 0;
+}
+
+
 
 /*
  *

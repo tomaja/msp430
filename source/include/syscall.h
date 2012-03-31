@@ -15,7 +15,7 @@ enum SSysCallType
 {
 	createproc,
 	destroyproc,
-	pauseproc
+	suspendproc
 };
 
 extern void syscall(enum SSysCallType Type, void *ptrData);
