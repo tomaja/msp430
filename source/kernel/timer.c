@@ -16,7 +16,7 @@
 void InitSystemTimer()
 {
 	TA0CCTL0 |= CCIE;						// Enable timer interrupt
-	TACCR0 = 65535;							// Set upper border of timer counter
+	TACCR0 = 50000; //65535;							// Set upper border of timer counter
 	TA0CTL |= MC_1 + TASSEL_2 + ID_1;		// Set up timer in up count mode
 	__bis_SR_register(GIE);					// Enable global interrupts
 }

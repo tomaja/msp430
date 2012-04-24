@@ -45,7 +45,7 @@ systimer:	inc.w	&TimerCounter	; Increment system clock
 			call	#Reschedule
 			mov.w	r12, SP
 			restoreGPR
-exit:		ret
+exit:		reti
 
 			.sect   ".int09"                ; MSP430 Timer0 Vector
 			.short  systimer

@@ -10,10 +10,11 @@ void SecondProcess(void)
 	Prolog();
 
 	int i = 0;
-	for(; i < 1000;++i)
+//	for(; i < 1000;++i)
+	while(1)
 	{
 		P1OUT ^= BIT6;
-		SuspendProcess(1000);
+		SuspendProcess(300);
 	}
 
 	Epilog();
@@ -26,10 +27,11 @@ void FirstProcess(void)
 	CreateProcess(SecondProcess);
 
 	int i = 0;
-	for(;i < 10000; ++i)
+//	for(;i < 10000; ++i)
+	while(1)
 	{
-		P1OUT = BIT0;
-		SuspendProcess(1000);
+		P1OUT ^= BIT0;
+		SuspendProcess(100);
 	}
 
 
@@ -41,13 +43,15 @@ void FirstProcess(void)
 void main(void)
 {
 	WDTCTL = WDTPW + WDTHOLD;	// Stop watchdog timer
+	//DCOCTL = 0x0;
+	//BCSCTL2 |= DIVM_3;
 	P1OUT = 0;
 	P1DIR |= BIT0 + BIT6;
 
-
+	InitSystemTimer();
 	CreateProcess(FirstProcess);
 
-	InitSystemTimer();
+
 
 	P1OUT = BIT0 + BIT6;
 

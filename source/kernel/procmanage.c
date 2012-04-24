@@ -37,10 +37,11 @@ struct SProcess
 #define FRAMESIZE			28
 #define	FRAMEWORDS			14
 #define STARTSTACK			0x3F8
+
 struct SProcess				Process[MAXPROCESSCOUNT];
-static int ProcCount 		= 0;
-static int ProcCurrent 		= 0;
-static char NeedReschedule	= 0;
+static int ProcCount 		= 0;	// Количество процессов в системе
+static int ProcCurrent 		= 0;	// Идентификатор текущего процесса
+static char NeedReschedule	= 0;	// Флаг необходимости перепланирования процессов
 extern int TimerCounter;
 
 /*
@@ -99,6 +100,8 @@ int KernelDestroyProcess()
 	Process[ProcCurrent].ProcState = zombie;
 	--ProcCount;
 	NeedReschedule = 1;
+
+
 	if(ProcCurrent == 0)
 	{
 		TA0CCTL0 &= ~CCIE;
@@ -114,11 +117,15 @@ int KernelDestroyProcess()
  */
 int KernelSuspendProcess(unsigned int *pSleepTime)
 {
-
+	int i = 0;
+	for(; i < *pSleepTime * 50; ++i)
+	{;}
+	// Get current time value
+	// Calculate wake up time related on pSleepTime
+	// Change process state to suspended
+	// Set Reschedule flag to enabled
 	return 0;
 }
-
-
 
 /*
  *
@@ -129,16 +136,20 @@ int* Reschedule(int *ptrStack)
 		return Process[ProcCurrent].ptrStack;
 
 //	int Current = 0;
-//	for(; Current < MAXPROCESSCOUNT -1; ++Current)
+//	for(; Current < MAXPROCESSCOUNT - 1; ++Current)
 //	{
+//
 //		Check all current process blocking data and set process state ready if it is possible
 //	}
-	//if((nTimerCounter % 5) == 0)	// !!!!!! ONLY FOR TESTING
-	if((TimerCounter % 5) == 0)
-	{
-		P1OUT ^= BIT0 + ~BIT6;	// !!!!!! ONLY FOR TESTING
-		return ptrStack;
-	}
+
+	/***************************************************************/
+//	if((TimerCounter % 5) == 0)// !!!!!! ONLY FOR TESTING
+//	{
+//		P1OUT ^= BIT0 + ~BIT6;	// !!!!!! ONLY FOR TESTING
+//		return ptrStack;
+//	}
+	/***************************************************************/
+
 
 	if(TimerCounter % 5 == 0 || NeedReschedule == 1)
 	{
