@@ -132,8 +132,8 @@ int KernelSuspendProcess(unsigned int *pSleepTime)
  */
 int* Reschedule(int *ptrStack)
 {
-	if(ProcCount == 1 && ProcCurrent == 0)
-		return Process[ProcCurrent].ptrStack;
+//	if(ProcCount == 1 && ProcCurrent == 0)
+//		return Process[ProcCurrent].ptrStack;
 
 //	int Current = 0;
 //	for(; Current < MAXPROCESSCOUNT - 1; ++Current)
@@ -143,23 +143,29 @@ int* Reschedule(int *ptrStack)
 //	}
 
 	/***************************************************************/
-//	if((TimerCounter % 5) == 0)// !!!!!! ONLY FOR TESTING
-//	{
-//		P1OUT ^= BIT0 + ~BIT6;	// !!!!!! ONLY FOR TESTING
-//		return ptrStack;
-//	}
+	//if( (*(int*)TimerCounter % 5) == 0)// !!!!!! ONLY FOR TESTING
+	if(TimerCounter % 10000 == 0)
+	{
+		P1OUT ^= BIT0;	// !!!!!! ONLY FOR TESTING
+		return ptrStack;
+	}
+	else
+	{
+		P1OUT ^= BIT6;	// !!!!!! ONLY FOR TESTING
+		return ptrStack;
+	}
 	/***************************************************************/
 
-
-	if(TimerCounter % 5 == 0 || NeedReschedule == 1)
-	{
-		Process[ProcCurrent].ptrStack = ptrStack;
-		++ProcCurrent;
-		ProcCurrent %= 3;
-		for(;Process[ProcCurrent].ProcState != ready; ++ProcCurrent, ProcCurrent %= 3);
-		NeedReschedule = 0;
-		return Process[ProcCurrent].ptrStack;
-	}
-	return ptrStack;
+//
+//	if(TimerCounter % 20 == 0 || NeedReschedule == 1)
+//	{
+//		Process[ProcCurrent].ptrStack = ptrStack;
+//		++ProcCurrent;
+//		ProcCurrent %= 3;
+//		for(;Process[ProcCurrent].ProcState != ready; ++ProcCurrent, ProcCurrent %= 3);
+//		NeedReschedule = 0;
+//		return Process[ProcCurrent].ptrStack;
+//	}
+//	return ptrStack;
 }
 

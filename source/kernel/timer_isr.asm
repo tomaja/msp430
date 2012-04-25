@@ -14,37 +14,43 @@ saveGPR		.macro
 			.endm
 
 restoreGPR	.macro
-				pop.w r4
-				pop.w r5
-				pop.w r6
-				pop.w r7
-				pop.w r8
-				pop.w r9
-				pop.w r10
-				pop.w r11
-				pop.w r12
-				pop.w r13
-				pop.w r14
 				pop.w r15
+				pop.w r14
+				pop.w r13
+				pop.w r12
+				pop.w r11
+				pop.w r10
+				pop.w r9
+				pop.w r8
+				pop.w r7
+				pop.w r6
+				pop.w r5
+				pop.w r4
 			.endm
 ; *************************************************************************
 				.data
-TimerCounter	.short 0
+TimerCounter	.word 0
+				.global TimerCounter
 ; *************************************************************************
 			.text
 			.global kermod
 			.global systimer
 			.global Reschedule
-			.global TimerCounter
 
-systimer:	inc.w	&TimerCounter	; Increment system clock
+systimer:
+;			dint					; allready disabled
+			inc.w	&TimerCounter	; Increment system clock
 			cmp.w	#0, &kermod		; Check interrupted process mode (kernel or user)
 			jne		exit			; Exit if kernel mode is active
 			saveGPR
-			mov.w	SP, r12
-			call	#Reschedule
-			mov.w	r12, SP
+;			mov.w	SP, r12
+;			call	#Reschedule
+;			mov.w	r12, SP
+			mov.w  #0x21, R12
+;			xor.b  #0x40, 0(R12)
+			mov.b  #0x40, 0(R12)
 			restoreGPR
+;			eint					; will be automatically enabled
 exit:		reti
 
 			.sect   ".int09"                ; MSP430 Timer0 Vector

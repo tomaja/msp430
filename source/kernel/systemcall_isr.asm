@@ -15,19 +15,19 @@ saveGPR		.macro
 			.endm
 
 restoreGPR	.macro
-				pop.w r4	; instead loading SR
-				pop.w r4
-				pop.w r5
-				pop.w r6
-				pop.w r7
-				pop.w r8
-				pop.w r9
-				pop.w r10
-				pop.w r11
-				pop.w r12
-				pop.w r13
-				pop.w r14
 				pop.w r15
+				pop.w r14
+				pop.w r13
+				pop.w r12
+				pop.w r11
+				pop.w r10
+				pop.w r9
+				pop.w r8
+				pop.w r7
+				pop.w r6
+				pop.w r5
+				pop.w r4
+				pop.w r4	; instead loading SR
 			.endm
 ; *************************************************************************
 			.data
@@ -40,6 +40,7 @@ kermod		.word 0
 			.global syscall
 
 syscall:
+			dint
 									; stack includes return address
 									; r12 includes syscal type
 									; r13 includes syscall data
@@ -51,6 +52,6 @@ syscall:
 			mov.w	r12, SP
 			restoreGPR
 			mov.w	#0x0, &kermod	; set kernel mode to inactive
-
+			eint
 			ret ;???????
 		.end
