@@ -38,26 +38,20 @@ void FirstProcess(void)
 	Epilog();
 }
 
+extern int kermod;
 
 
 void main(void)
 {
 	WDTCTL = WDTPW + WDTHOLD;	// Stop watchdog timer
-	DCOCTL = 0x0;
-	BCSCTL2 |= DIVM_3;
+	DCOCTL = DCO2;
+	BCSCTL1 = XT2OFF + RSEL3 + RSEL2;
 	P1OUT = 0;
 	P1DIR |= BIT0 + BIT6;
-
+	kermod = 0;
 	InitSystemTimer();
 //	CreateProcess(FirstProcess);
 
-//	while(1)
-//	{
-//		;
-//		P1OUT ^= BIT6 + BIT0;
-//	}
-//	P1OUT = BIT0 + BIT6;
-	P1OUT = BIT0;
 	__bis_SR_register(LPM0);
 }
 

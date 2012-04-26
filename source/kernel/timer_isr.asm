@@ -38,19 +38,14 @@ TimerCounter	.word 0
 			.global Reschedule
 
 systimer:
-;			dint					; allready disabled
 			inc.w	&TimerCounter	; Increment system clock
 			cmp.w	#0, &kermod		; Check interrupted process mode (kernel or user)
 			jne		exit			; Exit if kernel mode is active
 			saveGPR
-;			mov.w	SP, r12
-;			call	#Reschedule
-;			mov.w	r12, SP
-			mov.w  #0x21, R12
-;			xor.b  #0x40, 0(R12)
-			mov.b  #0x40, 0(R12)
+			mov.w	SP, r12
+			call	#Reschedule
+			mov.w	r12, SP
 			restoreGPR
-;			eint					; will be automatically enabled
 exit:		reti
 
 			.sect   ".int09"                ; MSP430 Timer0 Vector

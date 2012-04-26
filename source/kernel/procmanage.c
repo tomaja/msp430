@@ -143,15 +143,16 @@ int* Reschedule(int *ptrStack)
 //	}
 
 	/***************************************************************/
-	//if( (*(int*)TimerCounter % 5) == 0)// !!!!!! ONLY FOR TESTING
-	if(TimerCounter % 10000 == 0)
+	if(TimerCounter % 10000 == 0)// !!!!!! ONLY FOR TESTING
 	{
 		P1OUT ^= BIT0;	// !!!!!! ONLY FOR TESTING
+		TimerCounter = 0;
 		return ptrStack;
 	}
 	else
 	{
 		P1OUT ^= BIT6;	// !!!!!! ONLY FOR TESTING
+
 		return ptrStack;
 	}
 	/***************************************************************/
