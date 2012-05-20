@@ -10,10 +10,9 @@ void SecondProcess(void)
 	Prolog();
 
 	int i = 0;
-//	for(; i < 1000;++i)
-	while(1)
+	for(; i < 1000;++i)
 	{
-	//	P1OUT ^= BIT6;
+		P1OUT ^= BIT6;
 		SuspendProcess(300);
 	}
 
@@ -24,14 +23,13 @@ void FirstProcess(void)
 {
 	Prolog();
 
-//	CreateProcess(SecondProcess);
+	CreateProcess(SecondProcess);
 
 	int i = 0;
-//	for(;i < 10000; ++i)
-	while(1)
+	for(;i < 10000; ++i)
 	{
-	//	P1OUT ^= BIT0;
-	;//	SuspendProcess(100);
+		P1OUT ^= BIT0;
+		SuspendProcess(100);
 	}
 
 
@@ -44,8 +42,6 @@ extern int kermod;
 void main(void)
 {
 	WDTCTL = WDTPW + WDTHOLD;	// Stop watchdog timer
-	DCOCTL = DCO2;
-	BCSCTL1 = XT2OFF + RSEL3 + RSEL2;
 	P1OUT = 0;
 	P1DIR |= BIT0 + BIT6;
 	kermod = 0;

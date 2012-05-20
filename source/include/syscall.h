@@ -15,16 +15,10 @@ enum SSysCallType
 {
 	createproc,
 	destroyproc,
-	suspendproc
+	read,
+	send
 };
 
-extern void syscall(enum SSysCallType Type, void *ptrData);
-/*
- *
- */
-inline void SystemCall(enum SSysCallType Type, void *ptrData)
-{
-	syscall(Type, ptrData);
-}
+extern int syscall(enum SSysCallType Type, void *ptrData);
 
 #endif /* SYSCALL_H_ */

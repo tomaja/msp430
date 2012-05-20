@@ -33,6 +33,7 @@ struct SProcess
 
 
 //**********************************************//
+
 #define MAXPROCESSCOUNT		3
 #define FRAMESIZE			28
 #define	FRAMEWORDS			14
@@ -95,9 +96,18 @@ int KernelCreateProcess(void (*ptrFunction)(void))
 /*
  *
  */
-int KernelDestroyProcess()
+int KernelDestroyProcess(ptrData)
 {
-	Process[ProcCurrent].ProcState = zombie;
+	unsigned int PID
+	if(Process[PID].ProcState == zombie)
+		return -1;
+	if(PID >= MAXPROCESSCOUNT)
+		return -2;
+
+	if(PID == MAXPID)
+		Process[ProcCurrent].ProcState = zombie;
+	else
+		Process[PID].ProcState = zombie;
 	--ProcCount;
 	NeedReschedule = 1;
 
@@ -115,25 +125,25 @@ int KernelDestroyProcess()
 /*
  *
  */
-int KernelSuspendProcess(unsigned int *pSleepTime)
+int KernelRead(void *ptrData)
 {
-	int i = 0;
-	for(; i < *pSleepTime * 50; ++i)
-	{;}
-	// Get current time value
-	// Calculate wake up time related on pSleepTime
-	// Change process state to suspended
-	// Set Reschedule flag to enabled
+
 	return 0;
 }
-
+/*
+ *
+ */
+int KernelSend(void *ptrData)
+{
+	return 0;
+}
 /*
  *
  */
 int* Reschedule(int *ptrStack)
 {
-//	if(ProcCount == 1 && ProcCurrent == 0)
-//		return Process[ProcCurrent].ptrStack;
+	if(ProcCount == 1 && ProcCurrent == 0)
+		return Process[ProcCurrent].ptrStack;
 
 //	int Current = 0;
 //	for(; Current < MAXPROCESSCOUNT - 1; ++Current)
@@ -143,30 +153,28 @@ int* Reschedule(int *ptrStack)
 //	}
 
 	/***************************************************************/
-	if(TimerCounter % 10000 == 0)// !!!!!! ONLY FOR TESTING
-	{
-		P1OUT ^= BIT0;	// !!!!!! ONLY FOR TESTING
-		TimerCounter = 0;
-		return ptrStack;
-	}
-	else
-	{
-		P1OUT ^= BIT6;	// !!!!!! ONLY FOR TESTING
-
-		return ptrStack;
-	}
+//	if(TimerCounter % 1000 == 0)// !!!!!! ONLY FOR TESTING
+//	{
+//		P1OUT ^= BIT0;
+//		TimerCounter = 0;
+//		return ptrStack;
+//	}
+//	else
+//	{
+//		P1OUT ^= BIT6;
+//		return ptrStack;
+//	}
 	/***************************************************************/
 
-//
-//	if(TimerCounter % 20 == 0 || NeedReschedule == 1)
-//	{
-//		Process[ProcCurrent].ptrStack = ptrStack;
-//		++ProcCurrent;
-//		ProcCurrent %= 3;
-//		for(;Process[ProcCurrent].ProcState != ready; ++ProcCurrent, ProcCurrent %= 3);
-//		NeedReschedule = 0;
-//		return Process[ProcCurrent].ptrStack;
-//	}
-//	return ptrStack;
+	if(TimerCounter % 5000 == 0 || NeedReschedule == 1)
+	{
+		Process[ProcCurrent].ptrStack = ptrStack;
+		++ProcCurrent;
+		ProcCurrent %= 3;
+		for(;Process[ProcCurrent].ProcState != ready; ++ProcCurrent, ProcCurrent %= 3);
+		NeedReschedule = 0;
+		return Process[ProcCurrent].ptrStack;
+	}
+	return ptrStack;
 }
 

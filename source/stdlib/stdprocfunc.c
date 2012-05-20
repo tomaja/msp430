@@ -33,8 +33,30 @@ int CreateProcess(ptrFunction ptrFunc)
 	return 0;
 }
 
-int SuspendProcess(unsigned int SleepTime)
+int DestroyProcess(unsigned int PID, int Flags)
 {
-	syscall(suspendproc, &SleepTime);
-	return 0;
+	unsigned int Data[2];
+	Data[0] = PID;
+	Data[1] = Flags;
+	return syscall(destroyproc, (void*)&Data);
+}
+
+int Read(unsigned int SrcPID, unsigned int Timeout, unsigned int Size, void *pData)
+{
+	unsigned int Data[4];
+	Data[0] = SrcPID;
+	Data[1] = Timeout;
+	Data[2] = Size;
+	Data[3] = (unsigned int)pData;
+
+	return syscall(destroyproc, (void*)&Data);
+}
+int Send(unsigned int DstPID, unsigned int Timeout, unsigned int Size, void *pData)
+{
+	unsigned int Data[4];
+	Data[0] = DstPID;
+	Data[1] = Timeout;
+	Data[2] = Size;
+	Data[3] = (unsigned int)pData;
+	return syscall(destroyproc, (void*)&Data);
 }

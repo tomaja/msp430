@@ -20,11 +20,12 @@ int Action(enum SSysCallType Type, void *ptrData)
 		KernelCreateProcess((ptrFunction)ptrData);
 		break;
 	case destroyproc:
-		KernelDestroyProcess();
+		KernelDestroyProcess(ptrData);
 		break;
-	case suspendproc:
-		KernelSuspendProcess((unsigned int)ptrData);
-		break;
+	case read:
+		KernelRead(ptrData);
+	case send:
+		KernelSend(ptrData);
 	default:
 		return -1;
 	}

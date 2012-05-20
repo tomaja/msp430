@@ -10,7 +10,9 @@
 
 typedef void (*ptrFunction)(void);
 int KernelCreateProcess(ptrFunction ptrFunc);
-int KernelDestroyProcess();
+int KernelDestroyProcess(void *ptrData);
+int KernelRead(void *ptrData);
+int KerneSend(void *ptrData);
 void Reschedule();
 
 
