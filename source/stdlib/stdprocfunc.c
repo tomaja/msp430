@@ -6,6 +6,7 @@
  */
 #include "stdprocfunc.h"
 #include "syscall.h"
+#include "stddefs.h"
 
 /*
  *
@@ -19,8 +20,8 @@ void Prolog()
  */
 void Epilog()
 {
-	//SystemCall(destroyproc, 0);
-	syscall(destroyproc, 0);
+	int Data = CURRENTPID;
+	syscall(destroyproc, (void*)&Data);
 }
 
 /*
@@ -28,7 +29,6 @@ void Epilog()
  */
 int CreateProcess(ptrFunction ptrFunc)
 {
-	//SystemCall(createproc, (void*)ptrFunction);
 	syscall(createproc, ptrFunc);
 	return 0;
 }

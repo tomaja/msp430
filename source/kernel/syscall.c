@@ -17,19 +17,15 @@ int Action(enum SSysCallType Type, void *ptrData)
 	switch(Type)
 	{
 	case createproc:
-		KernelCreateProcess((ptrFunction)ptrData);
-		break;
+		return KernelCreateProcess((ptrFunction)ptrData);
 	case destroyproc:
-		KernelDestroyProcess(ptrData);
-		break;
+		return KernelDestroyProcess(ptrData);
 	case read:
-		KernelRead(ptrData);
+		return KernelRead(ptrData);
 	case send:
-		KernelSend(ptrData);
+		return KernelSend(ptrData);
 	default:
 		return -1;
 	}
-
-	return 0;
 }
 

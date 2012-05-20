@@ -4,7 +4,9 @@
 #include "msp430.h"
 #include "stdprocfunc.h"
 #include "timer.h"
-
+/*
+ *
+ */
 void SecondProcess(void)
 {
 	Prolog();
@@ -13,12 +15,14 @@ void SecondProcess(void)
 	for(; i < 1000;++i)
 	{
 		P1OUT ^= BIT6;
-		SuspendProcess(300);
+		Read(NILLPID, 100, 0, 0);
 	}
 
 	Epilog();
 }
-
+/*
+ *
+ */
 void FirstProcess(void)
 {
 	Prolog();
@@ -29,7 +33,7 @@ void FirstProcess(void)
 	for(;i < 10000; ++i)
 	{
 		P1OUT ^= BIT0;
-		SuspendProcess(100);
+		Read(NILLPID, 300, 0, 0);
 	}
 
 

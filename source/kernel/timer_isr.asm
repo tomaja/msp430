@@ -31,6 +31,7 @@ restoreGPR	.macro
 				.data
 TimerCounter	.word 0
 				.global TimerCounter
+				.global BigTimerCounter
 ; *************************************************************************
 			.text
 			.global kermod
@@ -38,9 +39,12 @@ TimerCounter	.word 0
 			.global Reschedule
 
 systimer:
-			inc.w	&TimerCounter	; Increment system clock
-			cmp.w	#0, &kermod		; Check interrupted process mode (kernel or user)
-			jne		exit			; Exit if kernel mode is active
+			inc.w	&TimerCounter			; Increment system clock
+			cmp.w	#0xFFFF, &TimerCounter	; Incremenr big system clock
+			jne		next
+			inc.w	&BigTimerCounter
+next:		cmp.w	#0x0, &kermod			; Check interrupted process mode (kernel or user)
+			jne		exit					; Exit if kernel mode is active
 			saveGPR
 			mov.w	SP, r12
 			call	#Reschedule

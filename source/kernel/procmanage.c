@@ -7,6 +7,7 @@
 
 #include "msp430g2553.h"
 #include "syscall.h"
+#include "stddefs.h"
 
 
 
@@ -44,6 +45,7 @@ static int ProcCount 		= 0;	// Количество процессов в системе
 static int ProcCurrent 		= 0;	// Идентификатор текущего процесса
 static char NeedReschedule	= 0;	// Флаг необходимости перепланирования процессов
 extern int TimerCounter;
+int BigTimerCounter;
 
 /*
  *
@@ -64,6 +66,7 @@ void InitializeProcessArray()
  */
 int KernelCreateProcess(void (*ptrFunction)(void))
 {
+	unsigned int CurrentPID;
 	if(ProcCount == MAXPROCESSCOUNT - 1)
 		return -1;
 	/*************************************************************************************/
@@ -74,6 +77,7 @@ int KernelCreateProcess(void (*ptrFunction)(void))
 		Process[0].ptrFunction = ptrFunction;
 		Process[0].ProcState = ready;
 		*(Process[0].ptrStack + FRAMEWORDS - 1) = (int)ptrFunction;//(int)ProcessFunction; // !!! Address of new process entry point, but not direct address of start function
+		CurrentPID = 0;
 	}
 	else
 	{
@@ -87,24 +91,25 @@ int KernelCreateProcess(void (*ptrFunction)(void))
 		Process[Current].ProcState = ready;
 		*(Process[Current].ptrStack + FRAMEWORDS - 1) = (int)ptrFunction;//(int)ProcessFunction; // !!! Address of new process entry point, but not direct address of start function
 		// Fill stack by zero
+		CurrentPID = Current;
 	}
 	NeedReschedule = 1;
+
 	++ProcCount;
-	return 0;
+	return CurrentPID;
 }
 
 /*
  *
  */
-int KernelDestroyProcess(ptrData)
+int KernelDestroyProcess(void *ptrData)
 {
-	unsigned int PID
+	unsigned int PID = *(unsigned int*)ptrData;
 	if(Process[PID].ProcState == zombie)
 		return -1;
 	if(PID >= MAXPROCESSCOUNT)
 		return -2;
-
-	if(PID == MAXPID)
+	if(PID == CURRENTPID)
 		Process[ProcCurrent].ProcState = zombie;
 	else
 		Process[PID].ProcState = zombie;
@@ -127,6 +132,13 @@ int KernelDestroyProcess(ptrData)
  */
 int KernelRead(void *ptrData)
 {
+	unsigned int *pData = (unsigned int*)ptrData;
+	unsigned int SrcPID = pData[0];
+	unsigned int Timeout = pData[1];
+	unsigned int Size = pData[2];
+	void *pIPCData = (void*)pData[3];
+
+
 
 	return 0;
 }
@@ -135,6 +147,13 @@ int KernelRead(void *ptrData)
  */
 int KernelSend(void *ptrData)
 {
+	unsigned int *pData = (unsigned int*)ptrData;
+	unsigned int DstPID = pData[0];
+	unsigned int Timeout = pData[1];
+	unsigned int Size = pData[2];
+	void *pIPCData = (void*)pData[3];
+
+
 	return 0;
 }
 /*
@@ -144,6 +163,7 @@ int* Reschedule(int *ptrStack)
 {
 	if(ProcCount == 1 && ProcCurrent == 0)
 		return Process[ProcCurrent].ptrStack;
+
 
 //	int Current = 0;
 //	for(; Current < MAXPROCESSCOUNT - 1; ++Current)
@@ -171,7 +191,7 @@ int* Reschedule(int *ptrStack)
 		Process[ProcCurrent].ptrStack = ptrStack;
 		++ProcCurrent;
 		ProcCurrent %= 3;
-		for(;Process[ProcCurrent].ProcState != ready; ++ProcCurrent, ProcCurrent %= 3);
+		for(;Process[ProcCurrent].ProcState != ready; ++ProcCurrent, ProcCurrent %= MAXPROCESSCOUNT);
 		NeedReschedule = 0;
 		return Process[ProcCurrent].ptrStack;
 	}

@@ -18,6 +18,8 @@ void InitSystemTimer()
 	BCSCTL1 = XT2OFF + RSEL3 + RSEL2;		// тактировани€ примрно на 1 ћ√ц
 	extern int TimerCounter;
 	TimerCounter = 0;
+	extern int BigTimerCounter;
+	BigTimerCounter = 0;
 	TA0CCTL0 |= CCIE;						// Enable timer interrupt
 	TACCR0 = 110; 							// Set upper border of timer counter
 											// Timer interrupt frequency is about 10KHz

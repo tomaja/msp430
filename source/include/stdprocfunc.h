@@ -8,9 +8,7 @@
 #ifndef STDPROCFUNC_H_
 #define STDPROCFUNC_H_
 
-#define MAXPID				100
-
-
+#include "stddefs.h"
 typedef void (*ptrFunction)(void);
 
 ///*
@@ -27,8 +25,8 @@ void Prolog();
 void Epilog();
 int CreateProcess(ptrFunction ptrFunc);
 int DestroyProcess(unsigned int PID, int Flags);
-int Read(unsigned int SrcPID, unsigned int Timeout, unsigned int Size, void *pData);
-int Send(unsigned int DstPID, unsigned int Timeout, unsigned int Size, void *pData);
+int Read(unsigned int SrcPID, unsigned int Timeout, unsigned int Size, void *pIPCData);
+int Send(unsigned int DstPID, unsigned int Timeout, unsigned int Size, void *pIPCData);
 
 
 
