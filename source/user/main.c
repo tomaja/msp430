@@ -50,7 +50,7 @@ void main(void)
 	P1DIR |= BIT0 + BIT6;
 	kermod = 0;
 	InitSystemTimer();
-//	CreateProcess(FirstProcess);
+	CreateProcess(FirstProcess);
 
 	__bis_SR_register(LPM0);
 }

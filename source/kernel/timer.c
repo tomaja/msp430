@@ -16,10 +16,11 @@ void InitSystemTimer()
 {
 	DCOCTL = DCO2;							// Настраивается частота основного
 	BCSCTL1 = XT2OFF + RSEL3 + RSEL2;		// тактирования примрно на 1 МГц
-	extern int TimerCounter;
-	TimerCounter = 0;
-	extern int BigTimerCounter;
-	BigTimerCounter = 0;
+	extern int TimerLow;
+	extern int TimerHigh;
+	TimerLow = 0;
+	TimerHigh = 0;
+
 	TA0CCTL0 |= CCIE;						// Enable timer interrupt
 	TACCR0 = 110; 							// Set upper border of timer counter
 											// Timer interrupt frequency is about 10KHz

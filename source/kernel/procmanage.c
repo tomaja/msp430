@@ -18,17 +18,32 @@ enum EProcessState
 {
 	ready,
 	run,
-	lock,
+	readlock,
+	sendlock,
 	zombie
+};
+
+/*
+ * Set of data which describe process which is waited
+ */
+struct SWaitingProp
+{
+	unsigned int	PID;
+	void			*pData;
+	unsigned int	Size;
+	unsigned int	DeadlineLow;
+	unsigned int	DeadlineHigh;
+	int				Error;
 };
 /*
  * Set of data which describes process entity
  */
 struct SProcess
 {
-	void	(*ptrFunction)(void);
-	enum	EProcessState ProcState;
-	int 	*ptrStack;
+	void					(*ptrFunction)(void);
+	enum					EProcessState ProcState;
+	int 					*ptrStack;
+	struct SWaitingProp		WaitingProp;
 };
 
 
@@ -44,13 +59,12 @@ struct SProcess				Process[MAXPROCESSCOUNT];
 static int ProcCount 		= 0;	// Количество процессов в системе
 static int ProcCurrent 		= 0;	// Идентификатор текущего процесса
 static char NeedReschedule	= 0;	// Флаг необходимости перепланирования процессов
-extern int TimerCounter;
-int BigTimerCounter;
+extern int TimerLow;
+extern int TimerHigh;
 
 /*
- *
+ * Initialize by default process' describing structures
  */
-
 void InitializeProcessArray()
 {
 	int Cur = 1;
@@ -59,10 +73,18 @@ void InitializeProcessArray()
 			Process[Cur].ProcState = zombie;
 			Process[Cur].ptrFunction = 0;
 			Process[Cur].ptrStack = 0;
+			Process[Cur].WaitingProp.DeadlineLow = 0;
+			Process[Cur].WaitingProp.DeadlineHigh = 0;
+			Process[Cur].WaitingProp.Error = 0;
+			Process[Cur].WaitingProp.PID = 0;
+			Process[Cur].WaitingProp.Size = 0;
+			Process[Cur].WaitingProp.pData = 0;
 	}
 }
 /*
- *
+ * Create new user process
+ * @param ptrFunction is a pointer to process function
+ * @return operation result
  */
 int KernelCreateProcess(void (*ptrFunction)(void))
 {
@@ -100,7 +122,9 @@ int KernelCreateProcess(void (*ptrFunction)(void))
 }
 
 /*
- *
+ * Destroy user process
+ * @param ptrData is a packed PID of destroying process
+ * @return operation result
  */
 int KernelDestroyProcess(void *ptrData)
 {
@@ -138,10 +162,64 @@ int KernelRead(void *ptrData)
 	unsigned int Size = pData[2];
 	void *pIPCData = (void*)pData[3];
 
+	if(ProcCurrent == SrcPID)
+		return READ_ERROR_CUR_EQ_SRC;
 
+	// If current process waits data from any process
+	if(SrcPID == ANYPID)
+	{
+		unsigned int i = 0;
+
+		// Find first process which wants to send data to current process
+		for(; i < MAXPROCESSCOUNT; ++i)
+			if(Process[i].ProcState == sendlock && Process[i].WaitingProp.PID == ProcCurrent)
+			{
+				SrcPID = i;
+				break;
+			}
+	}
+
+//	if(!IsLocalPID(SrcPID))
+//		DIPCMgr();
+
+	// If sending process is already waiting for receiving process
+	if(SrcPID != NILLPID && Process[SrcPID].ProcState == sendlock)
+	{
+		// If sending process can wait yet
+		if(Process[SrcPID].WaitingProp.DeadlineHigh <= TimerHigh &&
+		   Process[SrcPID].WaitingProp.DeadlineLow <= TimerLow) // Src side time isn't over
+		{
+			// If sending process is waiting for current process
+			if(Process[SrcPID].WaitingProp.PID == ProcCurrent
+					/*|| Process[SrcPID].WaitingProp.PID == ANYPID*/ // Only for receiving but not sending
+					)
+			{
+				Process[SrcPID].ProcState = ready;
+				int i = 0;
+				void *pSrcData = Process[SrcPID].WaitingProp.pData;
+				for(; i < Size; ++i)
+					((char*)pIPCData)[i] = ((char*)pSrcData)[i];
+				return 0;
+			}
+		}
+		else // Src side time is over
+		{
+			Process[SrcPID].WaitingProp.Error = SEND_ERROR_TIMEOUT;
+		}
+	}
+
+	Process[ProcCurrent].ProcState = readlock;
+	Process[ProcCurrent].WaitingProp.DeadlineHigh = (TimerLow + Timeout) / 65000;
+	Process[ProcCurrent].WaitingProp.DeadlineLow =  (TimerLow + Timeout) % 65000;
+	Process[ProcCurrent].WaitingProp.PID = SrcPID;
+	Process[ProcCurrent].WaitingProp.Size = Size;
+	Process[ProcCurrent].WaitingProp.pData = pIPCData;
+
+	NeedReschedule = 1;
 
 	return 0;
 }
+
 /*
  *
  */
@@ -161,15 +239,15 @@ int KernelSend(void *ptrData)
  */
 int* Reschedule(int *ptrStack)
 {
+	// Если процессов в системе нет еще, то вернуться из функции
 	if(ProcCount == 1 && ProcCurrent == 0)
 		return Process[ProcCurrent].ptrStack;
 
-
+	// Проверить состояния всех процессов в системе и изменить если требуется
 //	int Current = 0;
 //	for(; Current < MAXPROCESSCOUNT - 1; ++Current)
 //	{
 //
-//		Check all current process blocking data and set process state ready if it is possible
 //	}
 
 	/***************************************************************/
@@ -186,12 +264,17 @@ int* Reschedule(int *ptrStack)
 //	}
 	/***************************************************************/
 
-	if(TimerCounter % 5000 == 0 || NeedReschedule == 1)
+	// Переключить процесс если пришло время или установлен флаг необходимости перепланирования
+	if(TimerLow % 5000 == 0 || NeedReschedule == 1)
 	{
-		Process[ProcCurrent].ptrStack = ptrStack;
-		++ProcCurrent;
-		ProcCurrent %= 3;
-		for(;Process[ProcCurrent].ProcState != ready; ++ProcCurrent, ProcCurrent %= MAXPROCESSCOUNT);
+		if(TimerLow == 65000)
+			TimerLow = 0;
+		int OldProc = ProcCurrent;					// Номер текущего процесса
+		Process[ProcCurrent].ptrStack = ptrStack;	// Сохраняем стек текущего процесса
+		++ProcCurrent;								// Делаем текущим процессом следующий
+		ProcCurrent %= 3;							// Список процессов круговой
+		// Выбираем следующий процесс из готовых пока не пройдем весь список
+		for(;Process[ProcCurrent].ProcState != ready && ProcCurrent != OldProc; ++ProcCurrent, ProcCurrent %= MAXPROCESSCOUNT);
 		NeedReschedule = 0;
 		return Process[ProcCurrent].ptrStack;
 	}
