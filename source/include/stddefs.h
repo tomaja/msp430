@@ -14,10 +14,10 @@
 
 
 #define	READ_ERROR_CUR_EQ_SRC	-50
-#define	READ_ERROR_TIMEOUT		-51
+#define	ERROR_TIMEOUT			-51
 
-#define SEND_ERROR_CUR_EQ_DSR	-70
-#define SEND_ERROR_TIMEOUT		-71
+#define SEND_ERROR_CUR_EQ_DST	-70
+
 
 
 #endif /* STDDEFS_H_ */

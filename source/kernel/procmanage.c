@@ -166,6 +166,7 @@ int KernelRead(void *ptrData)
 		return READ_ERROR_CUR_EQ_SRC;
 
 	// If current process waits data from any process
+	// ONLY FOR RECEIVING !!!!
 	if(SrcPID == ANYPID)
 	{
 		unsigned int i = 0;
@@ -204,7 +205,7 @@ int KernelRead(void *ptrData)
 		}
 		else // Src side time is over
 		{
-			Process[SrcPID].WaitingProp.Error = SEND_ERROR_TIMEOUT;
+			Process[SrcPID].WaitingProp.Error = ERROR_TIMEOUT;
 		}
 	}
 
@@ -231,7 +232,44 @@ int KernelSend(void *ptrData)
 	unsigned int Size = pData[2];
 	void *pIPCData = (void*)pData[3];
 
+	if(ProcCurrent == DstPID)
+		return SEND_ERROR_CUR_EQ_DST;
 
+//	if(!IsLocalPID(SrcPID))
+//		DIPCMgr();
+
+	// If receiving process is already waiting for sending process
+	if(DstPID != NILLPID && Process[DstPID].ProcState == readlock)
+	{
+		// If receiving process can wait yet
+		if(Process[DstPID].WaitingProp.DeadlineHigh <= TimerHigh &&
+		   Process[DstPID].WaitingProp.DeadlineLow <= TimerLow) // Src side time isn't over
+		{
+			// If sending process is waiting for current process
+			if(Process[DstPID].WaitingProp.PID == ProcCurrent || Process[DstPID].WaitingProp.PID == ANYPID)
+			{
+				Process[DstPID].ProcState = ready;
+				int i = 0;
+				void *pDtsData = Process[DstPID].WaitingProp.pData;
+				for(; i < Size; ++i)
+					 ((char*)pDtsData)[i] = ((char*)pIPCData)[i];
+				return 0;
+			}
+		}
+		else // Src side time is over
+		{
+			Process[DstPID].WaitingProp.Error = ERROR_TIMEOUT;
+		}
+	}
+
+	Process[ProcCurrent].ProcState = sendlock;
+	Process[ProcCurrent].WaitingProp.DeadlineHigh = (TimerLow + Timeout) / 65000;
+	Process[ProcCurrent].WaitingProp.DeadlineLow =  (TimerLow + Timeout) % 65000;
+	Process[ProcCurrent].WaitingProp.PID = DstPID;
+	Process[ProcCurrent].WaitingProp.Size = Size;
+	Process[ProcCurrent].WaitingProp.pData = pIPCData;
+
+	NeedReschedule = 1;
 	return 0;
 }
 /*
@@ -244,11 +282,20 @@ int* Reschedule(int *ptrStack)
 		return Process[ProcCurrent].ptrStack;
 
 	// Проверить состояния всех процессов в системе и изменить если требуется
-//	int Current = 0;
-//	for(; Current < MAXPROCESSCOUNT - 1; ++Current)
-//	{
-//
-//	}
+	int Current = 0;
+	for(; Current < MAXPROCESSCOUNT - 1; ++Current)
+	{
+		if(Process[Current].ProcState == readlock || Process[Current].ProcState == sendlock)
+			if(Process[Current].WaitingProp.DeadlineHigh < TimerHigh ||
+				(Process[Current].WaitingProp.DeadlineHigh == TimerHigh &&
+				 Process[Current].WaitingProp.DeadlineLow < TimerLow))
+			{
+				Process[Current].ProcState = ready;
+				Process[Current].WaitingProp.Error = ERROR_TIMEOUT;
+				NeedReschedule = 1;
+			}
+
+	}
 
 	/***************************************************************/
 //	if(TimerCounter % 1000 == 0)// !!!!!! ONLY FOR TESTING
