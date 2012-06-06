@@ -33,7 +33,9 @@ restoreGPR	.macro
 			.endm
 ; *************************************************************************
 			.data
+			.global retval
 kermod		.word 0
+retval		.word 0
 ; *************************************************************************
 			.text
 			.global kermod
@@ -49,11 +51,12 @@ syscall:
 			mov.w	#0x1, &kermod 	; set kernel mode to active
 			saveGPR
 			call 	#Action
-			mov.w	r12, r4
+			;mov.w	r12, r4			;!!!!
 			mov.w	SP, r12
 			call	#Reschedule
 			mov.w	r12, SP
-			mov.w	r4, r12
+			;mov.w	r4, r12			;!!!!
+			mov.w	&retval, r12
 			restoreGPR
 			mov.w	#0x0, &kermod	; set kernel mode to inactive
 			eint					; set up by default only in hardware interrup handler but not here

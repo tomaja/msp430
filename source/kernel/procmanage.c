@@ -8,52 +8,9 @@
 #include "msp430g2553.h"
 #include "syscall.h"
 #include "stddefs.h"
+#include "procmanage.h"
+#include "intrmanage.h"
 
-
-
-/*
- * Enumeration of possible process state
- */
-enum EProcessState
-{
-	ready,
-	run,
-	readlock,
-	sendlock,
-	zombie
-};
-
-/*
- * Set of data which describe process which is waited
- */
-struct SWaitingProp
-{
-	unsigned int	PID;
-	void			*pData;
-	unsigned int	Size;
-	unsigned int	DeadlineLow;
-	unsigned int	DeadlineHigh;
-	int				Error;
-};
-/*
- * Set of data which describes process entity
- */
-struct SProcess
-{
-	void					(*ptrFunction)(void);
-	enum					EProcessState ProcState;
-	int 					*ptrStack;
-	struct SWaitingProp		WaitingProp;
-};
-
-
-
-//**********************************************//
-
-#define MAXPROCESSCOUNT		3
-#define FRAMESIZE			28
-#define	FRAMEWORDS			14
-#define STARTSTACK			0x3F8
 
 struct SProcess				Process[MAXPROCESSCOUNT];
 static int ProcCount 		= 0;	// Количество процессов в системе
@@ -61,6 +18,7 @@ static int ProcCurrent 		= 0;	// Идентификатор текущего процесса
 static char NeedReschedule	= 0;	// Флаг необходимости перепланирования процессов
 extern int TimerLow;
 extern int TimerHigh;
+extern int retval;
 
 /*
  * Initialize by default process' describing structures
@@ -73,9 +31,10 @@ void InitializeProcessArray()
 			Process[Cur].ProcState = zombie;
 			Process[Cur].ptrFunction = 0;
 			Process[Cur].ptrStack = 0;
+			Process[Cur].RetVal = 0;
 			Process[Cur].WaitingProp.DeadlineLow = 0;
 			Process[Cur].WaitingProp.DeadlineHigh = 0;
-			Process[Cur].WaitingProp.Error = 0;
+//			Process[Cur].WaitingProp.Error = 0;
 			Process[Cur].WaitingProp.PID = 0;
 			Process[Cur].WaitingProp.Size = 0;
 			Process[Cur].WaitingProp.pData = 0;
@@ -163,7 +122,10 @@ int KernelRead(void *ptrData)
 	void *pIPCData = (void*)pData[3];
 
 	if(ProcCurrent == SrcPID)
-		return READ_ERROR_CUR_EQ_SRC;
+	{
+		Process[ProcCurrent].RetVal = READ_ERROR_CUR_EQ_SRC;
+		return 0;
+	}
 
 	// If current process waits data from any process
 	// ONLY FOR RECEIVING !!!!
@@ -182,9 +144,17 @@ int KernelRead(void *ptrData)
 
 //	if(!IsLocalPID(SrcPID))
 //		DIPCMgr();
-
+	if(SrcPID - 100 >= 0 && SrcPID - 100 < HWINTRCOUNT)
+	{
+//		Check interrupt state
+//		if interrupt was initiated (interrupt flag is active and interrupt disabled now)
+//			Enable interrupt
+//			Process[ProcCurrent].RetVal = 0;
+//			return 0;
+		;
+	}
 	// If sending process is already waiting for receiving process
-	if(SrcPID != NILLPID && Process[SrcPID].ProcState == sendlock)
+	else if(SrcPID != NILLPID && Process[SrcPID].ProcState == sendlock)
 	{
 		// If sending process can wait yet
 		if(Process[SrcPID].WaitingProp.DeadlineHigh <= TimerHigh &&
@@ -200,13 +170,20 @@ int KernelRead(void *ptrData)
 				void *pSrcData = Process[SrcPID].WaitingProp.pData;
 				for(; i < Size; ++i)
 					((char*)pIPCData)[i] = ((char*)pSrcData)[i];
+				Process[ProcCurrent].RetVal = 0;
 				return 0;
 			}
 		}
 		else // Src side time is over
 		{
-			Process[SrcPID].WaitingProp.Error = ERROR_TIMEOUT;
+			Process[SrcPID].RetVal = ERROR_TIMEOUT;
 		}
+	}
+
+	if(Timeout == 0)
+	{
+		Process[ProcCurrent].RetVal = ERROR_TIMEOUT;
+		return 0;
 	}
 
 	Process[ProcCurrent].ProcState = readlock;
@@ -215,7 +192,7 @@ int KernelRead(void *ptrData)
 	Process[ProcCurrent].WaitingProp.PID = SrcPID;
 	Process[ProcCurrent].WaitingProp.Size = Size;
 	Process[ProcCurrent].WaitingProp.pData = pIPCData;
-
+	Process[ProcCurrent].RetVal = 0;
 	NeedReschedule = 1;
 
 	return 0;
@@ -233,7 +210,10 @@ int KernelSend(void *ptrData)
 	void *pIPCData = (void*)pData[3];
 
 	if(ProcCurrent == DstPID)
-		return SEND_ERROR_CUR_EQ_DST;
+	{
+		Process[ProcCurrent].RetVal = SEND_ERROR_CUR_EQ_DST;
+		return 0;
+	}
 
 //	if(!IsLocalPID(SrcPID))
 //		DIPCMgr();
@@ -243,7 +223,7 @@ int KernelSend(void *ptrData)
 	{
 		// If receiving process can wait yet
 		if(Process[DstPID].WaitingProp.DeadlineHigh <= TimerHigh &&
-		   Process[DstPID].WaitingProp.DeadlineLow <= TimerLow) // Src side time isn't over
+		   Process[DstPID].WaitingProp.DeadlineLow <= TimerLow) // Dst side time isn't over
 		{
 			// If sending process is waiting for current process
 			if(Process[DstPID].WaitingProp.PID == ProcCurrent || Process[DstPID].WaitingProp.PID == ANYPID)
@@ -253,13 +233,20 @@ int KernelSend(void *ptrData)
 				void *pDtsData = Process[DstPID].WaitingProp.pData;
 				for(; i < Size; ++i)
 					 ((char*)pDtsData)[i] = ((char*)pIPCData)[i];
+				Process[ProcCurrent].RetVal = 0;
 				return 0;
 			}
 		}
-		else // Src side time is over
+		else // Dst side time is over
 		{
-			Process[DstPID].WaitingProp.Error = ERROR_TIMEOUT;
+			Process[DstPID].RetVal = ERROR_TIMEOUT;
 		}
+	}
+
+	if(Timeout == 0)
+	{
+		Process[ProcCurrent].RetVal = ERROR_TIMEOUT;
+		return 0;
 	}
 
 	Process[ProcCurrent].ProcState = sendlock;
@@ -268,8 +255,10 @@ int KernelSend(void *ptrData)
 	Process[ProcCurrent].WaitingProp.PID = DstPID;
 	Process[ProcCurrent].WaitingProp.Size = Size;
 	Process[ProcCurrent].WaitingProp.pData = pIPCData;
+	Process[ProcCurrent].RetVal = 0;
 
 	NeedReschedule = 1;
+
 	return 0;
 }
 /*
@@ -291,7 +280,7 @@ int* Reschedule(int *ptrStack)
 				 Process[Current].WaitingProp.DeadlineLow < TimerLow))
 			{
 				Process[Current].ProcState = ready;
-				Process[Current].WaitingProp.Error = ERROR_TIMEOUT;
+				Process[Current].RetVal = ERROR_TIMEOUT;
 				NeedReschedule = 1;
 			}
 
@@ -325,6 +314,7 @@ int* Reschedule(int *ptrStack)
 		NeedReschedule = 0;
 		return Process[ProcCurrent].ptrStack;
 	}
+	retval = Process[ProcCurrent].RetVal;
 	return ptrStack;
 }
 
