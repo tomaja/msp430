@@ -25,7 +25,7 @@ extern int retval;
  */
 void InitializeProcessArray()
 {
-	int Cur = 1;
+	int Cur = 0;
 	for(; Cur < MAXPROCESSCOUNT; ++Cur)
 	{
 			Process[Cur].ProcState = zombie;
@@ -264,41 +264,45 @@ int KernelSend(void *ptrData)
 /*
  *
  */
-int* Reschedule(int *ptrStack)
+int Reschedule(int Stack)
 {
+	int* ptrStack = (int*)Stack + 1;
 	// Если процессов в системе нет еще, то вернуться из функции
-	if(ProcCount == 1 && ProcCurrent == 0)
-		return Process[ProcCurrent].ptrStack;
+	if(ProcCount == 0)
+		return (int)ptrStack - 2;
 
-	// Проверить состояния всех процессов в системе и изменить если требуется
-	int Current = 0;
-	for(; Current < MAXPROCESSCOUNT - 1; ++Current)
-	{
-		if(Process[Current].ProcState == readlock || Process[Current].ProcState == sendlock)
-			if(Process[Current].WaitingProp.DeadlineHigh < TimerHigh ||
-				(Process[Current].WaitingProp.DeadlineHigh == TimerHigh &&
-				 Process[Current].WaitingProp.DeadlineLow < TimerLow))
-			{
-				Process[Current].ProcState = ready;
-				Process[Current].RetVal = ERROR_TIMEOUT;
-				NeedReschedule = 1;
-			}
-
-	}
+//	if(ProcCount == 1)
+//		return (int)Process[ProcCurrent].ptrStack;
 
 	/***************************************************************/
-//	if(TimerCounter % 1000 == 0)// !!!!!! ONLY FOR TESTING
+//	if(TimerLow % 1000 == 0)// !!!!!! ONLY FOR TESTING
 //	{
 //		P1OUT ^= BIT0;
-//		TimerCounter = 0;
-//		return ptrStack;
+//		TimerLow = 0;
+////		return ptrStack;
 //	}
 //	else
 //	{
 //		P1OUT ^= BIT6;
-//		return ptrStack;
+////		return ptrStack;
 //	}
 	/***************************************************************/
+
+	// Проверить состояния всех процессов в системе и изменить если требуется
+//	int Current = 0;
+//	for(; Current < MAXPROCESSCOUNT - 1; ++Current)
+//	{
+//		if(Process[Current].ProcState == readlock || Process[Current].ProcState == sendlock)
+//			if(Process[Current].WaitingProp.DeadlineHigh < TimerHigh ||
+//				(Process[Current].WaitingProp.DeadlineHigh == TimerHigh &&
+//				 Process[Current].WaitingProp.DeadlineLow < TimerLow))
+//			{
+//				Process[Current].ProcState = ready;
+//				Process[Current].RetVal = ERROR_TIMEOUT;
+//				NeedReschedule = 1;
+//			}
+//
+//	}
 
 	// Переключить процесс если пришло время или установлен флаг необходимости перепланирования
 	if(TimerLow % 5000 == 0 || NeedReschedule == 1)
@@ -307,14 +311,19 @@ int* Reschedule(int *ptrStack)
 			TimerLow = 0;
 		int OldProc = ProcCurrent;					// Номер текущего процесса
 		Process[ProcCurrent].ptrStack = ptrStack;	// Сохраняем стек текущего процесса
+		Process[ProcCurrent].ProcState = ready;
 		++ProcCurrent;								// Делаем текущим процессом следующий
 		ProcCurrent %= 3;							// Список процессов круговой
 		// Выбираем следующий процесс из готовых пока не пройдем весь список
 		for(;Process[ProcCurrent].ProcState != ready && ProcCurrent != OldProc; ++ProcCurrent, ProcCurrent %= MAXPROCESSCOUNT);
 		NeedReschedule = 0;
-		return Process[ProcCurrent].ptrStack;
+//		retval = Process[ProcCurrent].RetVal;
+//		return Process[ProcCurrent].ptrStack;
+		Process[ProcCurrent].ProcState = run;
+//		ptrStack = Process[ProcCurrent].ptrStack;
 	}
 	retval = Process[ProcCurrent].RetVal;
-	return ptrStack;
+//	return (int)ptrStack;
+	return (int)Process[ProcCurrent].ptrStack;
 }
 

@@ -41,8 +41,8 @@ TimerLow		.word 0
 			.global Reschedule
 
 systimer:
-			inc.w	&TimerLow			; Increment system clock
-			cmp.w	#0xFFFF, &TimerLow	; Incremenr big system clock
+			inc.w	&TimerLow				; Increment system clock
+			cmp.w	#0xFD, &TimerLow		; Incremenr big system clock
 			jne		next
 			inc.w	&TimerHigh
 next:		cmp.w	#0x0, &kermod			; Check interrupted process mode (kernel or user)

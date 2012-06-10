@@ -12,10 +12,11 @@ void SecondProcess(void)
 	Prolog();
 
 	int i = 0;
-	for(; i < 1000;++i)
+	//for(; i < 1000;++i)
+	while(1)
 	{
 		P1OUT ^= BIT6;
-		Read(NILLPID, 100, 0, 0);
+//		Read(NILLPID, 100, 0, 0);
 	}
 
 	Epilog();
@@ -30,10 +31,11 @@ void FirstProcess(void)
 	CreateProcess(SecondProcess);
 
 	int i = 0;
-	for(;i < 10000; ++i)
+	//for(;i < 10000; ++i)
+	while(1)
 	{
 		P1OUT ^= BIT0;
-		Read(NILLPID, 300, 0, 0);
+//		Read(NILLPID, 300, 0, 0);
 	}
 
 
@@ -51,8 +53,8 @@ void main(void)
 	kermod = 0;
 	InitSystemTimer();
 	CreateProcess(FirstProcess);
-
-	__bis_SR_register(LPM0);
+	while(1);
+//	__bis_SR_register(LPM0);
 }
 
 

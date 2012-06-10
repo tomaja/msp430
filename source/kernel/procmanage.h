@@ -50,7 +50,7 @@ struct SProcess
 #define MAXPROCESSCOUNT		3
 #define FRAMESIZE			28
 #define	FRAMEWORDS			14
-#define STARTSTACK			0x3F8
+#define STARTSTACK			0x3FE
 
 
 

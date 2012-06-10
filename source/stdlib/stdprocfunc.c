@@ -49,7 +49,7 @@ int Read(unsigned int SrcPID, unsigned int Timeout, unsigned int Size, void *pDa
 	Data[2] = Size;
 	Data[3] = (unsigned int)pData;
 
-	return syscall(destroyproc, (void*)&Data);
+	return syscall(read, (void*)&Data);
 }
 int Send(unsigned int DstPID, unsigned int Timeout, unsigned int Size, void *pData)
 {
@@ -58,5 +58,5 @@ int Send(unsigned int DstPID, unsigned int Timeout, unsigned int Size, void *pDa
 	Data[1] = Timeout;
 	Data[2] = Size;
 	Data[3] = (unsigned int)pData;
-	return syscall(destroyproc, (void*)&Data);
+	return syscall(send, (void*)&Data);
 }

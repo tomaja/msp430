@@ -44,7 +44,7 @@ retval		.word 0
 			.global syscall
 
 syscall:
-			dint					; set up by default only in hardware interrup handler but not here
+;			dint					; set up by default only in hardware interrup handler but not here
 									; stack includes return address
 									; r12 includes syscal type
 									; r13 includes syscall data
@@ -59,6 +59,6 @@ syscall:
 			mov.w	&retval, r12
 			restoreGPR
 			mov.w	#0x0, &kermod	; set kernel mode to inactive
-			eint					; set up by default only in hardware interrup handler but not here
+;			eint					; set up by default only in hardware interrup handler but not here
 			ret						; ret but not iret because here is interrupt emulation
 		.end
