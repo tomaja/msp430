@@ -41,6 +41,7 @@ struct SProcess
 	int 					*ptrStack;
 	struct SWaitingProp		WaitingProp;
 	int						RetVal;
+	int						New;
 };
 
 
