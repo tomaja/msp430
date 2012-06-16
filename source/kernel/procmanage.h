@@ -41,7 +41,6 @@ struct SProcess
 	int 					*ptrStack;
 	struct SWaitingProp		WaitingProp;
 	int						RetVal;
-	int						New;
 };
 
 
@@ -49,9 +48,9 @@ struct SProcess
 //**********************************************//
 
 #define MAXPROCESSCOUNT		3
-#define FRAMESIZE			28
-#define	FRAMEWORDS			14
-#define STARTSTACK			0x3FE
+#define FRAMESIZE			0x1C
+#define	FRAMEWORDS			0xE
+#define STARTSTACK			0x3FC
 
 
 

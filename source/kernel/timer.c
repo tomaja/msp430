@@ -21,8 +21,8 @@ void InitSystemTimer()
 	TimerLow = 0;
 	TimerHigh = 0;
 
-//	TA0CCTL0 |= CCIE;						// Enable timer interrupt
-	TACCR0 = 1100; 							// Set upper border of timer counter
+	TA0CCTL0 |= CCIE;						// Enable timer interrupt
+	TACCR0 = 110; 							// Set upper border of timer counter
 											// Timer interrupt frequency is about 10KHz
 	TA0CTL |= MC_1 + TASSEL_2 + ID_1;		// Set up timer in up count mode
 	__bis_SR_register(GIE);					// Enable global interrupts

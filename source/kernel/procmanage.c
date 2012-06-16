@@ -16,9 +16,9 @@ struct SProcess				Process[MAXPROCESSCOUNT];
 static int ProcCount 		= 0;	// Количество процессов в системе
 static int ProcCurrent 		= -1;	// Идентификатор текущего процесса
 static char NeedReschedule	= 0;	// Флаг необходимости перепланирования процессов
-extern int TimerLow;
-extern int TimerHigh;
-extern int retval;
+extern unsigned int TimerLow;
+extern unsigned int TimerHigh;
+extern unsigned int retval;
 
 /*
  * Initialize by default process' describing structures
@@ -38,7 +38,6 @@ void InitializeProcessArray()
 			Process[Cur].WaitingProp.PID = 0;
 			Process[Cur].WaitingProp.Size = 0;
 			Process[Cur].WaitingProp.pData = 0;
-			Process[Cur].New = 1;
 	}
 }
 /*
@@ -63,17 +62,14 @@ int KernelCreateProcess(void (*ptrFunction)(void))
 	}
 	else
 	{
-//		Process[ProcCurrent].ProcState = ready;
 		int Current = 1;
 		for(;Current < MAXPROCESSCOUNT && Process[Current].ProcState != zombie; ++Current);
-		//	if(Process[Current].ProcState == zombie)
-		//		break;
 
-		Process[Current].ptrStack = Process[Current - 1].ptrStack - 0x30 - FRAMESIZE; // New stack's address minus 26 words for frame and minus 2 words for PC to return back to syscall
+		Process[Current].ptrStack = (int*)(STARTSTACK - Current * 0x30 - FRAMESIZE); // New stack's address minus 26 words for frame and minus 2 words for PC to return back to syscall
 		Process[Current].ptrFunction = ptrFunction;
 		Process[Current].ProcState = ready;
 		*(Process[Current].ptrStack + FRAMEWORDS - 1) = (int)ptrFunction;//(int)ProcessFunction; // !!! Address of new process entry point, but not direct address of start function
-
+		*(Process[Current].ptrStack + FRAMEWORDS - 2) = *(Process[ProcCurrent].ptrStack + FRAMEWORDS - 1);
 		// Fill stack by zero
 		CurrentPID = Current;
 	}
@@ -269,11 +265,7 @@ int KernelSend(void *ptrData)
  */
 int Reschedule(int Stack)
 {
-//	int* ptrStack = (int*)Stack + 1;
-
 	int* ptrStack = (int*)Stack;
-//	if(ProcCurrent == -1)
-//		ptrStack = (int*)Stack + 1;
 
 	// Если процессов в системе нет еще, то вернуться из функции
 	if(ProcCount == 0)
@@ -283,10 +275,9 @@ int Reschedule(int Stack)
 //		return (int)Process[ProcCurrent].ptrStack;
 
 	/***************************************************************/
-//	if(TimerLow % 1000 == 0)// !!!!!! ONLY FOR TESTING
+//	if(TimerLow % 5000 == 0)// !!!!!! ONLY FOR TESTING
 //	{
 //		P1OUT ^= BIT0;
-//		TimerLow = 0;
 ////		return ptrStack;
 //	}
 //	else
@@ -311,34 +302,28 @@ int Reschedule(int Stack)
 //			}
 //
 //	}
-
+//	if(ProcCurrent == 0)
+//		P1OUT = BIT0;
+//	if(ProcCurrent == 1)
+//		P1OUT = 0;
 	// Переключить процесс если пришло время или установлен флаг необходимости перепланирования
-	if(TimerLow % 500 == 0 || NeedReschedule == 1)
+	if(TimerLow % 5000 == 0 || NeedReschedule == 1)
 	{
 		if(TimerLow == 65000)
 			TimerLow = 0;
 		if(ProcCurrent == -1)
 			++ProcCurrent;
 		int OldProc = ProcCurrent;					// Номер текущего процесса
-		if(Process[ProcCurrent].New == 1)
-			Process[ProcCurrent].ptrStack = ptrStack + 1;	// Сохраняем стек текущего процесса
-		else
-			Process[ProcCurrent].ptrStack = ptrStack;	// Сохраняем стек текущего процесса
-		Process[ProcCurrent].New = 0;
+		Process[ProcCurrent].ptrStack = ptrStack;	// Сохраняем стек текущего процесса
 		Process[ProcCurrent].ProcState = ready;
 		++ProcCurrent;								// Делаем текущим процессом следующий
 		ProcCurrent %= 3;							// Список процессов круговой
 		// Выбираем следующий процесс из готовых пока не пройдем весь список
 		for(;Process[ProcCurrent].ProcState != ready && ProcCurrent != OldProc; ++ProcCurrent, ProcCurrent %= MAXPROCESSCOUNT);
 		NeedReschedule = 0;
-//		retval = Process[ProcCurrent].RetVal;
-//		return Process[ProcCurrent].ptrStack;
 		Process[ProcCurrent].ProcState = run;
-//		Process[ProcCurrent].New = 0;
-//		ptrStack = Process[ProcCurrent].ptrStack;
 	}
 	retval = Process[ProcCurrent].RetVal;
-//	return (int)ptrStack;
 	return (int)Process[ProcCurrent].ptrStack;
 }
 

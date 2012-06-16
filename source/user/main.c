@@ -9,37 +9,33 @@
  */
 void SecondProcess(void)
 {
-	Prolog();
+//	Prolog();
 
-	int i = 0;
-	//for(; i < 1000;++i)
 	while(1)
 	{
 		P1OUT ^= BIT6;
 //		Read(NILLPID, 100, 0, 0);
 	}
 
-	Epilog();
+//	Epilog();
 }
 /*
  *
  */
 void FirstProcess(void)
 {
-	Prolog();
+//	Prolog();
 
 	CreateProcess(SecondProcess);
-
-	int i = 0;
-	//for(;i < 10000; ++i)
 	while(1)
 	{
+
 		P1OUT ^= BIT0;
 //		Read(NILLPID, 300, 0, 0);
 	}
 
 
-	Epilog();
+//	Epilog();
 }
 
 extern int kermod;
